@@ -1,0 +1,28 @@
+{
+  "name": "mwtanews",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "docker": "npm run build && docker compose up -d --build",
+    "migrate:init": "set DATABASE_URL=postgresql://botuser:devPassword42@localhost:15432/botdb && psql %DATABASE_URL% -f sql/001_create_user_settings.sql",
+    "watch": "tsc --watch",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@grammyjs/conversations": "^2.1.0",
+    "@grammyjs/menu": "^1.3.0",
+    "axios": "^1.8.4",
+    "dotenv": "^16.4.5",
+    "grammy": "^1.35.0",
+    "pg": "^8.11.5"            
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "@types/node": "^22.13.5",
+    "@types/node-fetch": "^2.6.12",
+    "@types/pg": "^8.11.11",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
+  }
+}
