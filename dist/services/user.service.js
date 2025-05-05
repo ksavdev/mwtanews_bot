@@ -29,13 +29,27 @@ export async function createUser(tgId, username) {
     }
 }
 /** изменить часовой пояс (строка вида "UTC+3") */
-export async function setTimezone(tgId, tzLabel) {
+export async function setTimezone(tgId, tzOffset) {
     try {
-        const res = await pool.query("UPDATE user_settings SET tz_label = $2 WHERE tg_id = $1", [tgId, tzLabel]);
-        console.log("[setTimezone]", tgId, "set", tzLabel, "rows:", res.rowCount);
+        const res = await pool.query("UPDATE user_settings SET tz_offset = $2 WHERE tg_id = $1", [tgId, tzOffset]);
+        console.log("[setTimezone]", tgId, "set", tzOffset, "rows:", res.rowCount);
     }
     catch (err) {
         console.error("[setTimezone] DB error:", err);
+        throw err;
+    }
+}
+/** изменить важность новостей *по дефолту стоит 2 */
+export async function setImportance(tgId, importance) {
+    if (![1, 2, 3].includes(importance)) {
+        throw new Error("importance must be 1, 2, or 3");
+    }
+    try {
+        const res = await pool.query("UPDATE user_settings SET importance = $2 WHERE tg_id = $1", [tgId, importance]);
+        console.log("[setImportance]", tgId, "set", importance, "rows:", res.rowCount);
+    }
+    catch (err) {
+        console.error("[setImportance] DB error:", err);
         throw err;
     }
 }

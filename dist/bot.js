@@ -4,8 +4,9 @@ import { conversations, } from "@grammyjs/conversations";
 import { helpMessage } from "./messages/helpMessage.js";
 // Команды 
 import { setupBotCommands } from "./commands/commandList.js";
-import { helpCommand } from "./commands/helpCommand.js";
+import { helpCommand } from "./commands/help.js";
 import { createUser, findUser, updateUsername } from "./services/user.service.js";
+import { setNewsTypeCommand } from "./commands/setNewsType.js";
 const bot = new Bot(process.env.TG_BOT_TOKEN);
 // bot.use(async (ctx, next) => {
 //     ctx.config = {
@@ -19,6 +20,7 @@ bot.use(conversations());
 // bot.use(clothesMenu);
 // bot.use(startMenu);
 // Регистрируем команды (или команды-обработчики)
+setNewsTypeCommand(bot);
 helpCommand(bot);
 setupBotCommands(bot);
 bot.command("start", async (ctx) => {

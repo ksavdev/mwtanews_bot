@@ -9,8 +9,9 @@ import { helpMessage } from "./messages/helpMessage.js";
 
 // Команды 
 import { setupBotCommands } from "./commands/commandList.js";
-import { helpCommand } from "./commands/helpCommand.js";
+import { helpCommand } from "./commands/help.js";
 import { createUser, findUser, updateUsername } from "./services/user.service.js";
+import { setNewsTypeCommand } from "./commands/setNewsType.js";
 
 interface BotConfig {
     botDeveloper: number;
@@ -43,6 +44,7 @@ bot.use(conversations<OuterCtx, InnerCtx>());
 // bot.use(startMenu);
 
 // Регистрируем команды (или команды-обработчики)
+setNewsTypeCommand(bot);
 helpCommand(bot);
 
 setupBotCommands(bot);
