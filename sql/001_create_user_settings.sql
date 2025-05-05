@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS user_settings (
   tg_id       BIGINT PRIMARY KEY,
+  tg_username TEXT NOT NULL,
   tz_offset   SMALLINT  NOT NULL DEFAULT 0,
   lang        CHAR(2)   NOT NULL DEFAULT 'ru',
   importance  SMALLINT  NOT NULL DEFAULT 2,
