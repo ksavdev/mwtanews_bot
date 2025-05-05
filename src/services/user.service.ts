@@ -29,7 +29,7 @@ export async function findUser(tgId: number): Promise<UserRow | null> {
 }
 
 /** создать пользователя с настройками по умолчанию */
-export async function createUser(tgId: number, username = ""): Promise<void> {
+export async function createUser(tgId: number, username: string): Promise<void> {
     try {
         const res = await pool.query(
             `INSERT INTO user_settings (tg_id, tg_username)

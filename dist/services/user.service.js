@@ -16,7 +16,7 @@ export async function findUser(tgId) {
     }
 }
 /** создать пользователя с настройками по умолчанию */
-export async function createUser(tgId, username = "") {
+export async function createUser(tgId, username) {
     try {
         const res = await pool.query(`INSERT INTO user_settings (tg_id, tg_username)
              VALUES ($1, $2)

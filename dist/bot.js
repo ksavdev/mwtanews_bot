@@ -30,7 +30,7 @@ bot.command("start", async (ctx) => {
         await ctx.reply(`Рады видеть снова, ${ctx.from.first_name}! 👋`);
     }
     else {
-        await createUser(uid);
+        await createUser(uid, uname);
         ctx.reply(`Привет ${ctx.from?.first_name}!
 Добро пожаловать в Trade Soul News!
 
