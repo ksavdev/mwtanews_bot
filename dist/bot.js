@@ -11,6 +11,7 @@ import { tzRegionMenu } from "./menus/timezoneMenu.js";
 import { setTzCommand } from "./commands/setTzCommand.js";
 import { utcHelpCommand } from "./commands/utcHelp.js";
 import { utcHelpConversation } from "./conversations/utcHelpConv.js";
+import { setLangCommand } from "./commands/setLang.js";
 const bot = new Bot(process.env.TG_BOT_TOKEN);
 // bot.use(async (ctx, next) => {
 //     ctx.config = {
@@ -24,6 +25,7 @@ bot.use(conversations());
 bot.use(createConversation(utcHelpConversation));
 bot.use(tzRegionMenu);
 // Регистрируем команды (или команды-обработчики)
+setLangCommand(bot);
 utcHelpCommand(bot);
 setTzCommand(bot);
 setNewsTypeCommand(bot);

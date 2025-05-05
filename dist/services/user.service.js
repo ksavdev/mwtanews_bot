@@ -67,3 +67,6 @@ export async function updateUsername(tgId, username = "") {
         throw err;
     }
 }
+export async function setLanguage(tgId, lang) {
+    await pool.query("UPDATE user_settings SET lang = $2 WHERE tg_id = $1", [tgId, lang]);
+}

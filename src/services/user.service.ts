@@ -94,3 +94,10 @@ export async function updateUsername(tgId: number, username = ""): Promise<void>
     throw err;
   }
 }
+
+export async function setLanguage(tgId: number, lang: "ru" | "en") {
+  await pool.query(
+    "UPDATE user_settings SET lang = $2 WHERE tg_id = $1",
+    [tgId, lang],
+  );
+}
