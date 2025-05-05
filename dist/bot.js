@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { Bot } from "grammy";
-import { conversations, } from "@grammyjs/conversations";
+import { conversations, createConversation, } from "@grammyjs/conversations";
 import { helpMessage } from "./messages/helpMessage.js";
 // Команды 
 import { setupBotCommands } from "./commands/commandList.js";
@@ -9,6 +9,8 @@ import { createUser, findUser, updateUsername } from "./services/user.service.js
 import { setNewsTypeCommand } from "./commands/setNewsType.js";
 import { tzRegionMenu } from "./menus/timezoneMenu.js";
 import { setTzCommand } from "./commands/setTzCommand.js";
+import { utcHelpCommand } from "./commands/utcHelp.js";
+import { utcHelpConversation } from "./conversations/utcHelpConv.js";
 const bot = new Bot(process.env.TG_BOT_TOKEN);
 // bot.use(async (ctx, next) => {
 //     ctx.config = {
@@ -18,8 +20,11 @@ const bot = new Bot(process.env.TG_BOT_TOKEN);
 //     await next();
 // });
 bot.use(conversations());
+// Подключаем все разговоры
+bot.use(createConversation(utcHelpConversation));
 bot.use(tzRegionMenu);
 // Регистрируем команды (или команды-обработчики)
+utcHelpCommand(bot);
 setTzCommand(bot);
 setNewsTypeCommand(bot);
 helpCommand(bot);

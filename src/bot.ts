@@ -15,6 +15,8 @@ import { setNewsTypeCommand } from "./commands/setNewsType.js";
 import { MenuFlavor } from "@grammyjs/menu";
 import { tzRegionMenu } from "./menus/timezoneMenu.js";
 import { setTzCommand } from "./commands/setTzCommand.js";
+import { utcHelpCommand } from "./commands/utcHelp.js";
+import { utcHelpConversation } from "./conversations/utcHelpConv.js";
 
 interface BotConfig {
     botDeveloper: number;
@@ -42,9 +44,14 @@ const bot = new Bot<OuterCtx>(process.env.TG_BOT_TOKEN!);
 // });
 
 bot.use(conversations<OuterCtx, InnerCtx>());
+
+// Подключаем все разговоры
+bot.use(createConversation(utcHelpConversation));
+
 bot.use(tzRegionMenu)
 
 // Регистрируем команды (или команды-обработчики)
+utcHelpCommand(bot);
 setTzCommand(bot);
 setNewsTypeCommand(bot);
 helpCommand(bot);
