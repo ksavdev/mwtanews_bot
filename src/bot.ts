@@ -12,6 +12,9 @@ import { setupBotCommands } from "./commands/commandList.js";
 import { helpCommand } from "./commands/help.js";
 import { createUser, findUser, updateUsername } from "./services/user.service.js";
 import { setNewsTypeCommand } from "./commands/setNewsType.js";
+import { MenuFlavor } from "@grammyjs/menu";
+import { tzRegionMenu } from "./menus/timezoneMenu.js";
+import { setTzCommand } from "./commands/setTzCommand.js";
 
 interface BotConfig {
     botDeveloper: number;
@@ -21,6 +24,7 @@ interface BotConfig {
 export type OuterCtx =
     & Context
     & ConversationFlavor<Context>
+    & MenuFlavor
     & { config: BotConfig };
 
 export type InnerCtx =
@@ -38,12 +42,10 @@ const bot = new Bot<OuterCtx>(process.env.TG_BOT_TOKEN!);
 // });
 
 bot.use(conversations<OuterCtx, InnerCtx>());
-// bot.use(createConversation<OuterCtx, InnerCtx>(calc));
-
-// bot.use(clothesMenu);
-// bot.use(startMenu);
+bot.use(tzRegionMenu)
 
 // Регистрируем команды (или команды-обработчики)
+setTzCommand(bot);
 setNewsTypeCommand(bot);
 helpCommand(bot);
 
@@ -56,7 +58,7 @@ bot.command("start", async (ctx) => {
     const user = await findUser(uid);
 
     if (user) {
-        await updateUsername(uid, uname); 
+        await updateUsername(uid, uname);
         await ctx.reply(
             `Рады видеть снова, ${ctx.from!.first_name}! 👋`
         );

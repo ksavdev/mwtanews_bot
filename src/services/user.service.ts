@@ -44,19 +44,20 @@ export async function createUser(tgId: number, username: string): Promise<void> 
     }
 }
 
-/** изменить часовой пояс (строка вида "UTC+3") */
-export async function setTimezone(tgId: number, tzOffset: string): Promise<void> {
-    try {
-        const res = await pool.query(
-            "UPDATE user_settings SET tz_offset = $2 WHERE tg_id = $1",
-            [tgId, tzOffset],
-        );
-        console.log("[setTimezone]", tgId, "set", tzOffset, "rows:", res.rowCount);
-    } catch (err) {
-        console.error("[setTimezone] DB error:", err);
-        throw err;
-    }
+/** изменить часовой пояс (строка вида "UTC+3" или "Europe/Minsk") */
+export async function setTimezone(tgId: number, tzId: string): Promise<void> {
+  try {
+    const res = await pool.query(
+      "UPDATE user_settings SET tz_id = $2 WHERE tg_id = $1",
+      [tgId, tzId],
+    );
+    console.log("[setTimezone]", tgId, "set", tzId, "rows:", res.rowCount);
+  } catch (err) {
+    console.error("[setTimezone] DB error:", err);
+    throw err;
+  }
 }
+
 
 /** изменить важность новостей *по дефолту стоит 2 */
 export async function setImportance(tgId: number, importance: number): Promise<void> {

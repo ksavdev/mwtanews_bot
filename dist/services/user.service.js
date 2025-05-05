@@ -28,11 +28,11 @@ export async function createUser(tgId, username) {
         throw err;
     }
 }
-/** изменить часовой пояс (строка вида "UTC+3") */
-export async function setTimezone(tgId, tzOffset) {
+/** изменить часовой пояс (строка вида "UTC+3" или "Europe/Minsk") */
+export async function setTimezone(tgId, tzId) {
     try {
-        const res = await pool.query("UPDATE user_settings SET tz_offset = $2 WHERE tg_id = $1", [tgId, tzOffset]);
-        console.log("[setTimezone]", tgId, "set", tzOffset, "rows:", res.rowCount);
+        const res = await pool.query("UPDATE user_settings SET tz_id = $2 WHERE tg_id = $1", [tgId, tzId]);
+        console.log("[setTimezone]", tgId, "set", tzId, "rows:", res.rowCount);
     }
     catch (err) {
         console.error("[setTimezone] DB error:", err);

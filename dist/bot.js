@@ -7,6 +7,8 @@ import { setupBotCommands } from "./commands/commandList.js";
 import { helpCommand } from "./commands/help.js";
 import { createUser, findUser, updateUsername } from "./services/user.service.js";
 import { setNewsTypeCommand } from "./commands/setNewsType.js";
+import { tzRegionMenu } from "./menus/timezoneMenu.js";
+import { setTzCommand } from "./commands/setTzCommand.js";
 const bot = new Bot(process.env.TG_BOT_TOKEN);
 // bot.use(async (ctx, next) => {
 //     ctx.config = {
@@ -16,10 +18,9 @@ const bot = new Bot(process.env.TG_BOT_TOKEN);
 //     await next();
 // });
 bot.use(conversations());
-// bot.use(createConversation<OuterCtx, InnerCtx>(calc));
-// bot.use(clothesMenu);
-// bot.use(startMenu);
+bot.use(tzRegionMenu);
 // Регистрируем команды (или команды-обработчики)
+setTzCommand(bot);
 setNewsTypeCommand(bot);
 helpCommand(bot);
 setupBotCommands(bot);
