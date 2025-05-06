@@ -24,7 +24,10 @@ services:
         condition: service_healthy
     environment:
       TG_BOT_TOKEN: ${TG_BOT_TOKEN}
+      TE_TOKEN: ${TE_TOKEN}
       DATABASE_URL: ${DATABASE_URL}
+      LOG_LEVEL:    ${LOG_LEVEL}
+      
 
 volumes:
   db_data:

@@ -12,6 +12,7 @@ import { setTzCommand } from "./commands/setTzCommand.js";
 import { utcHelpCommand } from "./commands/utcHelp.js";
 import { utcHelpConversation } from "./conversations/utcHelpConv.js";
 import { setLangCommand } from "./commands/setLang.js";
+import { dailyNewsCommand } from "./commands/dailyNews.js";
 const bot = new Bot(process.env.TG_BOT_TOKEN);
 // bot.use(async (ctx, next) => {
 //     ctx.config = {
@@ -25,6 +26,7 @@ bot.use(conversations());
 bot.use(createConversation(utcHelpConversation));
 bot.use(tzRegionMenu);
 // Регистрируем команды (или команды-обработчики)
+dailyNewsCommand(bot);
 setLangCommand(bot);
 utcHelpCommand(bot);
 setTzCommand(bot);
@@ -50,6 +52,10 @@ bot.command("start", async (ctx) => {
 ${helpMessage}
 `);
     }
+});
+bot.catch((err) => {
+    const ctx = err.ctx;
+    console.error(`💥 Error while handling update ${ctx.update.update_id}:`, err.error);
 });
 bot.start();
 console.log("Бот запущен");
