@@ -1,5 +1,5 @@
 import { Bot } from 'grammy'
-import { OuterCtx } from '../bot';
+import { OuterCtx } from '../bot.js';
 
 
 export const setupBotCommands = (bot: Bot<OuterCtx>) => {

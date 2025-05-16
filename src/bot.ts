@@ -19,6 +19,7 @@ import { utcHelpCommand } from "./commands/utcHelp.js";
 import { utcHelpConversation } from "./conversations/utcHelpConv.js";
 import { setLangCommand } from "./commands/setLang.js";
 import { dailyNewsCommand } from "./commands/dailyNews.js";
+import { weeklyNewsCommand } from "./commands/weeklyNews.js";
 
 interface BotConfig {
     botDeveloper: number;
@@ -53,6 +54,7 @@ bot.use(createConversation(utcHelpConversation));
 bot.use(tzRegionMenu)
 
 // Регистрируем команды (или команды-обработчики)
+weeklyNewsCommand(bot);
 dailyNewsCommand(bot);
 setLangCommand(bot);
 utcHelpCommand(bot);
