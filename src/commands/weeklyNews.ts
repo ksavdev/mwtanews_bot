@@ -17,7 +17,7 @@ const debug = (...a: unknown[]) => LOG_LEVEL === "debug" && console.log("[DEBUG]
 /* эмодзи по важности */
 const mark = ["🟢", "🟡", "🔴"];
 
-/* поддерживаемые ISO-коды языков для локалей */
+/* поддерживаемые ISO-коды языков */
 const ISO: Record<string, true> = {
   it: true, zh: true, ru: true, es: true, pl: true, tr: true, ja: true,
   pt: true, da: true, fa: true, ko: true, fr: true, no: true, id: true,
@@ -44,11 +44,7 @@ function currencyName(cur: string): string {
 }
 
 /* ───────── SQL helper ───────── */
-interface PrefRow {
-  tz_id: string;
-  importance: number;
-  lang: string;
-}
+interface PrefRow { tz_id: string; importance: number; lang: string; }
 async function getPrefs(tgId: number): Promise<PrefRow | null> {
   const { rows } = await pool.query<PrefRow>(
     "SELECT tz_id, importance, lang FROM user_settings WHERE tg_id=$1",
@@ -58,8 +54,7 @@ async function getPrefs(tgId: number): Promise<PrefRow | null> {
 }
 
 /**
- * Возвращает события текущей недели (понедельник—воскресенье) в UTC,
- * а мы потом переводим их в таймзону пользователя.
+ * Возвращает все события текущей недели (понедельник—воскресенье) в UTC.
  */
 async function getWeekEvents(lang: string, tz: string): Promise<CalendarEvent[]> {
   const all = await scrapeAllEvents();
@@ -89,7 +84,7 @@ export function weeklyNewsCommand(bot: Bot<OuterCtx>) {
       return ctx.reply("⚠️ Не удалось получить новости, попробуйте позже.");
     }
 
-    // Фильтрация и сортировка
+    // Фильтр + сортировка
     const events = raw
       .filter((e): e is CalendarEvent & { timestamp: string } =>
         e.importance >= pref.importance && e.timestamp != null
@@ -105,52 +100,60 @@ export function weeklyNewsCommand(bot: Bot<OuterCtx>) {
       return ctx.reply("На этой неделе важных событий нет 🙂");
     }
 
-    // Группируем по локальной дате
+    // Группируем по дате
     const grouped: Record<string, CalendarEvent[]> = {};
     for (const e of events) {
-      const local = DateTime.fromISO(e.timestamp!, { zone: "utc" })
-        .setZone(pref.tz_id);
-      const key = local.toISODate()!; // yyyy-MM-dd
+      const local = DateTime.fromISO(e.timestamp!, { zone: "utc" }).setZone(pref.tz_id);
+      const key = local.toISODate()!;
       (grouped[key] ??= []).push(e);
     }
 
-    // Формируем заголовок
+    // Заголовок с диапазоном недели
     const weekStart = DateTime.utc().setZone(pref.tz_id).startOf("week");
     const weekEnd   = DateTime.utc().setZone(pref.tz_id).endOf("week");
     const header = `<b>Ключевые события недели</b> ` +
       `(${weekStart.toFormat("dd.LL.yyyy")} — ${weekEnd.toFormat("dd.LL.yyyy")}, ${pref.tz_id})`;
 
-    // Перебираем каждый день недели
-    const lines: string[] = [ header ];
+    // Собираем блоки по дням
+    const dayBlocks: string[] = [];
     for (let i = 0; i < 7; i++) {
       const day     = weekStart.plus({ days: i });
       const iso     = day.toISODate()!;
       const dayName = day.setLocale("ru").toFormat("cccc");
       const dateStr = day.toFormat("dd.LL.yyyy");
-      lines.push(
-        `\n<b>${dayName.charAt(0).toUpperCase() + dayName.slice(1)} — ${dateStr} (UTC${day.toFormat("ZZ")}):</b>`
-      );
+
+      let blk = `\n<b>${dayName.charAt(0).toUpperCase() + dayName.slice(1)} — ${dateStr} ` +
+                `(UTC${day.toFormat("ZZ")}):</b>\n`;
       const evs = grouped[iso] ?? [];
       if (!evs.length) {
-        lines.push("Важные события на эту дату отсутствуют.");
+        blk += "Важные события на эту дату отсутствуют.\n";
       } else {
         for (const e of evs) {
           const t = DateTime.fromISO(e.timestamp!, { zone: "utc" })
             .setZone(pref.tz_id)
             .toFormat("HH:mm");
-          lines.push(
+          blk +=
             `${mark[e.importance - 1]} ${currencyFlag(e.currency)} ` +
-            `${currencyName(e.currency)} — ${e.title} — ${t}`
-          );
+            `${currencyName(e.currency)} — ${e.title} — ${t}\n`;
         }
       }
+      dayBlocks.push(blk);
     }
 
-    // Подпись в конце
-    lines.push("\n_____________________________");
-    lines.push("by Ksavdev");
+    // Склеиваем всё в один текст и проверяем длину
+    const full = header + "\n" + dayBlocks.join("") +
+      "\n_____________________________\nby Ksavdev";
 
-    await ctx.reply(lines.join("\n"), {
+    // Если длина вышла за лимит — сразу предлагаем выбрать тип новостей
+    if (full.length > 4000) { // с запасом под UTF-8 и разметку
+      return ctx.reply(
+        "⚠️ Слишком много новостей для текущего типа. " +
+        "Пожалуйста, используйте команду /set_news_type, чтобы выбрать, какие категории вы хотите получать."
+      );
+    }
+
+    // Иначе — шлём одним сообщением
+    return ctx.reply(full, {
       parse_mode: "HTML",
       link_preview_options: { is_disabled: true },
     });
