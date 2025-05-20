@@ -16,6 +16,7 @@ const utcHelpConv_js_1 = require("./conversations/utcHelpConv.js");
 const setLang_js_1 = require("./commands/setLang.js");
 const dailyNews_js_1 = require("./commands/dailyNews.js");
 const weeklyNews_js_1 = require("./commands/weeklyNews.js");
+const dailyNewsScheduler_js_1 = require("./scheduler/dailyNewsScheduler.js");
 const bot = new grammy_1.Bot(process.env.TG_BOT_TOKEN);
 // bot.use(async (ctx, next) => {
 //     ctx.config = {
@@ -37,6 +38,8 @@ bot.use(timezoneMenu_js_1.tzRegionMenu);
 (0, setNewsType_js_1.setNewsTypeCommand)(bot);
 (0, help_js_1.helpCommand)(bot);
 (0, commandList_js_1.setupBotCommands)(bot);
+(0, dailyNewsScheduler_js_1.startDailyNewsScheduler)(bot);
+bot.command("daily_news", (ctx) => (0, dailyNews_js_1.sendDailyNews)(bot, ctx.from.id));
 bot.command("start", async (ctx) => {
     const uid = ctx.from.id;
     const uname = ctx.from.username ?? "";

@@ -18,8 +18,9 @@ import { setTzCommand } from "./commands/setTzCommand.js";
 import { utcHelpCommand } from "./commands/utcHelp.js";
 import { utcHelpConversation } from "./conversations/utcHelpConv.js";
 import { setLangCommand } from "./commands/setLang.js";
-import { dailyNewsCommand } from "./commands/dailyNews.js";
+import { dailyNewsCommand, sendDailyNews } from "./commands/dailyNews.js";
 import { weeklyNewsCommand } from "./commands/weeklyNews.js";
+import { startDailyNewsScheduler } from "./scheduler/dailyNewsScheduler.js";
 
 interface BotConfig {
     botDeveloper: number;
@@ -63,6 +64,9 @@ setNewsTypeCommand(bot);
 helpCommand(bot);
 
 setupBotCommands(bot);
+startDailyNewsScheduler(bot);
+
+bot.command("daily_news", (ctx) => sendDailyNews(bot, ctx.from!.id));
 
 bot.command("start", async (ctx) => {
     const uid = ctx.from!.id;

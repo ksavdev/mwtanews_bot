@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.dailyNewsCommand = dailyNewsCommand;
+exports.sendDailyNews = sendDailyNews;
 const luxon_1 = require("luxon");
 const db_js_1 = require("../db.js");
 const scrape_js_1 = require("../services/calendar/scrape.js");
@@ -10,7 +11,7 @@ const info = (...a) => console.log("[INFO]", ...a);
 const debug = (...a) => LOG_LEVEL === "debug" && console.log("[DEBUG]", ...a);
 /* эмодзи по уровню важности */
 const mark = ["🟢", "🟡", "🔴"];
-/* ISO-коды валют, которые поддерживаем */
+/* ISO-коды поддерживаемых языков */
 const ISO = {
     it: true, zh: true, ru: true, es: true, pl: true, tr: true, ja: true,
     pt: true, da: true, fa: true, ko: true, fr: true, no: true, id: true,
@@ -19,19 +20,12 @@ const ISO = {
 /** Привязка кода валюты к флажку */
 function currencyFlag(cur) {
     const map = {
-        USD: "🇺🇸",
-        EUR: "🇪🇺",
-        CAD: "🇨🇦",
-        GBP: "🇬🇧",
-        JPY: "🇯🇵",
-        AUD: "🇦🇺",
-        NZD: "🇳🇿",
-        CHF: "🇨🇭",
-        CNY: "🇨🇳",
+        USD: "🇺🇸", EUR: "🇪🇺", CAD: "🇨🇦", GBP: "🇬🇧", JPY: "🇯🇵",
+        AUD: "🇦🇺", NZD: "🇳🇿", CHF: "🇨🇭", CNY: "🇨🇳",
     };
     return map[cur] ?? "";
 }
-/** Разбивает длинное сообщение на чанки по 20 строк */
+/** Разбивает длинный текст на чанки по 20 строк */
 async function replyInChunks(ctx, header, lines, footer) {
     const batchSize = 20;
     for (let i = 0; i < lines.length; i += batchSize) {
@@ -42,15 +36,17 @@ async function replyInChunks(ctx, header, lines, footer) {
         parts.push(...chunk);
         if (i + batchSize >= lines.length)
             parts.push(footer);
-        await ctx.reply(parts.join("\n"), { link_preview_options: { is_disabled: true } });
+        await ctx.reply(parts.join("\n"), {
+            link_preview_options: { is_disabled: true },
+        });
     }
 }
 async function getPrefs(tgId) {
-    const { rows } = await db_js_1.pool.query("SELECT tz_id, importance, lang FROM user_settings WHERE tg_id=$1", [tgId]);
+    const { rows } = await db_js_1.pool.query("SELECT tz_id, importance, lang FROM user_settings WHERE tg_id = $1", [tgId]);
     return rows[0] ?? null;
 }
 /**
- * Выбирает события за «сегодня» в таймзоне пользователя.
+ * Фильтрует события календаря только на «сегодня» (локально для tz).
  */
 async function getTodayEvents(lang, tz) {
     const all = await (0, scrape_js_1.scrapeAllEvents)();
@@ -71,29 +67,24 @@ function dailyNewsCommand(bot) {
         const pref = await getPrefs(uid);
         if (!pref)
             return ctx.reply("Сначала введите /start 🙂");
-        const lang = ISO[pref.lang] ? pref.lang : "en";
-        let raw;
+        let events;
         try {
-            raw = await getTodayEvents(lang, pref.tz_id);
+            events = await getTodayEvents(pref.lang, pref.tz_id);
         }
         catch (err) {
             console.error("[calendar scrape]", err);
             return ctx.reply("⚠️ Не удалось получить новости, попробуйте позже.");
         }
-        const events = raw
+        events = events
             .filter(e => e.importance >= pref.importance && e.timestamp)
             .sort((a, b) => a.timestamp < b.timestamp ? -1 : 1);
-        info(`/daily_news ${uid}: scraped=${raw.length}, shown=${events.length}`);
-        if (LOG_LEVEL === "debug") {
-            const dropped = raw.filter(e => e.importance < pref.importance || !e.timestamp);
-            debug("Dropped:", dropped.length, JSON.stringify(dropped, null, 2));
-        }
+        info(`/daily_news ${uid}: scraped=${events.length}`);
         if (!events.length)
             return ctx.reply("Сегодня важных событий нет 🙂");
-        const locale = ISO[pref.lang] ? pref.lang : "en";
-        const today = luxon_1.DateTime.utc().setZone(pref.tz_id).setLocale(locale);
+        const today = luxon_1.DateTime.utc().setZone(pref.tz_id)
+            .setLocale(ISO[pref.lang] ? pref.lang : "en");
         const header = `Ключевые события ${today.toFormat("cccc - dd.LL.yyyy")} (${pref.tz_id}):`;
-        const footer = "_____________________________\nby Тут тоже напишу что скажешь потом ";
+        const footer = "_____________________________\nby Trade Soul News";
         const lines = events.map(e => {
             const t = luxon_1.DateTime.fromISO(e.timestamp, { zone: "utc" })
                 .setZone(pref.tz_id)
@@ -102,4 +93,39 @@ function dailyNewsCommand(bot) {
         });
         await replyInChunks(ctx, header, lines, footer);
     });
+}
+/* ───────── для фонового планировщика ───────── */
+async function sendDailyNews(bot, userId) {
+    const pref = await getPrefs(userId);
+    if (!pref)
+        return; // пользователь ещё не /start
+    let events;
+    try {
+        events = await getTodayEvents(pref.lang, pref.tz_id);
+    }
+    catch (err) {
+        console.error("[calendar scrape]", err);
+        return bot.api.sendMessage(userId, "⚠️ Не удалось получить новости, попробуйте позже.");
+    }
+    events = events
+        .filter(e => e.importance >= pref.importance && e.timestamp)
+        .sort((a, b) => a.timestamp < b.timestamp ? -1 : 1);
+    if (!events.length) {
+        return bot.api.sendMessage(userId, "Сегодня важных событий нет 🙂");
+    }
+    const today = luxon_1.DateTime.utc().setZone(pref.tz_id)
+        .setLocale(ISO[pref.lang] ? pref.lang : "en");
+    const header = `Ключевые события ${today.toFormat("cccc - dd.LL.yyyy")} (${pref.tz_id}):`;
+    const footer = "_____________________________\nby Trade Soul News";
+    const lines = events.map(e => {
+        const t = luxon_1.DateTime.fromISO(e.timestamp, { zone: "utc" })
+            .setZone(pref.tz_id)
+            .toFormat("dd.LL HH:mm");
+        return `${mark[e.importance - 1]} ${currencyFlag(e.currency)} ${e.currency} — ${e.title} — ${t}`;
+    });
+    // временно создаём «контекст-клон» c типизированным параметром
+    await replyInChunks({
+        ...bot,
+        reply: (txt) => bot.api.sendMessage(userId, txt),
+    }, header, lines, footer);
 }

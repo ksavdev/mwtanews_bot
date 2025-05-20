@@ -1,3 +1,6 @@
+-- 001_create_user_settings.sql
+-- (обновлённая версия, включающая маркер last_daily_sent)
+
 CREATE TABLE IF NOT EXISTS user_settings (
   tg_id        BIGINT      PRIMARY KEY,
   tg_username  TEXT        NOT NULL,
@@ -5,6 +8,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
   tz_id        TEXT        NOT NULL DEFAULT 'UTC',
   lang         CHAR(2)     NOT NULL DEFAULT 'ru',
   importance   SMALLINT    NOT NULL DEFAULT 2,        -- 1=low,2=mid,3=high
+  last_daily_sent DATE,                               -- дата последней утренней отправки
   created_at   TIMESTAMPTZ DEFAULT now(),
   updated_at   TIMESTAMPTZ DEFAULT now()
 );
