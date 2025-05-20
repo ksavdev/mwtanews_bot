@@ -1,7 +1,10 @@
+"use strict";
 // src/commands/weeklyNews.ts
-import { DateTime } from "luxon";
-import { pool } from "../db.js";
-import { scrapeAllEvents, } from "../services/calendar/scrape.js";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.weeklyNewsCommand = weeklyNewsCommand;
+const luxon_1 = require("luxon");
+const db_js_1 = require("../db.js");
+const scrape_js_1 = require("../services/calendar/scrape.js");
 /* ====== настройки логов ====== */
 const LOG_LEVEL = process.env.LOG_LEVEL ?? "info";
 const info = (...a) => console.log("[INFO]", ...a);
@@ -32,26 +35,26 @@ function currencyName(cur) {
     return map[cur] || cur;
 }
 async function getPrefs(tgId) {
-    const { rows } = await pool.query("SELECT tz_id, importance, lang FROM user_settings WHERE tg_id=$1", [tgId]);
+    const { rows } = await db_js_1.pool.query("SELECT tz_id, importance, lang FROM user_settings WHERE tg_id=$1", [tgId]);
     return rows[0] ?? null;
 }
 /**
  * Возвращает все события текущей недели (понедельник—воскресенье) в UTC.
  */
 async function getWeekEvents(lang, tz) {
-    const all = await scrapeAllEvents();
-    const today = DateTime.utc().setZone(tz);
+    const all = await (0, scrape_js_1.scrapeAllEvents)();
+    const today = luxon_1.DateTime.utc().setZone(tz);
     const weekStart = today.startOf("week").toUTC();
     const weekEnd = today.endOf("week").toUTC();
     return all.filter(e => {
         if (!e.timestamp)
             return false;
-        const ts = DateTime.fromISO(e.timestamp, { zone: "utc" });
+        const ts = luxon_1.DateTime.fromISO(e.timestamp, { zone: "utc" });
         return ts >= weekStart && ts <= weekEnd;
     });
 }
 /* ───────── команда /weekly_news ───────── */
-export function weeklyNewsCommand(bot) {
+function weeklyNewsCommand(bot) {
     bot.command("weekly_news", async (ctx) => {
         const uid = ctx.from.id;
         const pref = await getPrefs(uid);
@@ -81,13 +84,13 @@ export function weeklyNewsCommand(bot) {
         // Группируем по дате
         const grouped = {};
         for (const e of events) {
-            const local = DateTime.fromISO(e.timestamp, { zone: "utc" }).setZone(pref.tz_id);
+            const local = luxon_1.DateTime.fromISO(e.timestamp, { zone: "utc" }).setZone(pref.tz_id);
             const key = local.toISODate();
             (grouped[key] ??= []).push(e);
         }
         // Заголовок с диапазоном недели
-        const weekStart = DateTime.utc().setZone(pref.tz_id).startOf("week");
-        const weekEnd = DateTime.utc().setZone(pref.tz_id).endOf("week");
+        const weekStart = luxon_1.DateTime.utc().setZone(pref.tz_id).startOf("week");
+        const weekEnd = luxon_1.DateTime.utc().setZone(pref.tz_id).endOf("week");
         const header = `<b>Ключевые события недели</b> ` +
             `(${weekStart.toFormat("dd.LL.yyyy")} — ${weekEnd.toFormat("dd.LL.yyyy")}, ${pref.tz_id})`;
         // Собираем блоки по дням
@@ -105,7 +108,7 @@ export function weeklyNewsCommand(bot) {
             }
             else {
                 for (const e of evs) {
-                    const t = DateTime.fromISO(e.timestamp, { zone: "utc" })
+                    const t = luxon_1.DateTime.fromISO(e.timestamp, { zone: "utc" })
                         .setZone(pref.tz_id)
                         .toFormat("HH:mm");
                     blk +=

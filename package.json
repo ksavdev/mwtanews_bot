@@ -1,7 +1,7 @@
 {
   "name": "mwtanews",
   "version": "1.0.0",
-  "type": "module",
+  "type": "commonjs", 
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "docker": "npm run build && docker compose up -d --build",
@@ -18,7 +18,10 @@
     "dotenv": "^16.4.5",
     "grammy": "^1.35.0",
     "luxon": "^3.6.1",
-    "pg": "^8.11.5"
+    "pg": "^8.11.5",
+    "puppeteer": "^24.9.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
   },
   "devDependencies": {
     "@types/debug": "^4.1.12",

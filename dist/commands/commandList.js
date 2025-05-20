@@ -1,4 +1,7 @@
-export const setupBotCommands = (bot) => {
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.setupBotCommands = void 0;
+const setupBotCommands = (bot) => {
     bot.api.setMyCommands([
         { command: 'start', description: "Команда для запуска бота" },
         { command: 'weekly_news', description: "Отображение списка всех новостей, которые должны выйти на этой неделе." },
@@ -10,3 +13,4 @@ export const setupBotCommands = (bot) => {
         { command: 'help', description: "Список всех команд, которые доступны в боте с примерами использования." },
     ]);
 };
+exports.setupBotCommands = setupBotCommands;

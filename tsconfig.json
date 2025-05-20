@@ -1,15 +1,15 @@
 {
-    "compilerOptions": {
-      "target": "ESNext",          
-      "module": "nodenext",          
-      "outDir": "./dist",          
-      "rootDir": "./src",          
-      "strict": true,              
-      "moduleResolution": "nodenext",
-      "esModuleInterop": true,
-      "skipLibCheck": true       
-    },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist"]
-  }
-  
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",          // ← ключевое
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
+}

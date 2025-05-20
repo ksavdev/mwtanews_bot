@@ -1,10 +1,18 @@
-import { Pool } from "pg";
-import "dotenv/config";
-const pool = new Pool({
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.findUser = findUser;
+exports.createUser = createUser;
+exports.setTimezone = setTimezone;
+exports.setImportance = setImportance;
+exports.updateUsername = updateUsername;
+exports.setLanguage = setLanguage;
+const pg_1 = require("pg");
+require("dotenv/config");
+const pool = new pg_1.Pool({
     connectionString: process.env.DATABASE_URL,
 });
 /** найти пользователя, вернуть null если нет */
-export async function findUser(tgId) {
+async function findUser(tgId) {
     try {
         const res = await pool.query("SELECT * FROM user_settings WHERE tg_id = $1 LIMIT 1", [tgId]);
         console.log("[findUser]", tgId, "→", res.rows[0] ?? null);
@@ -16,7 +24,7 @@ export async function findUser(tgId) {
     }
 }
 /** создать пользователя с настройками по умолчанию */
-export async function createUser(tgId, username) {
+async function createUser(tgId, username) {
     try {
         const res = await pool.query(`INSERT INTO user_settings (tg_id, tg_username)
              VALUES ($1, $2)
@@ -29,7 +37,7 @@ export async function createUser(tgId, username) {
     }
 }
 /** изменить часовой пояс (строка вида "UTC+3" или "Europe/Minsk") */
-export async function setTimezone(tgId, tzId) {
+async function setTimezone(tgId, tzId) {
     try {
         const res = await pool.query("UPDATE user_settings SET tz_id = $2 WHERE tg_id = $1", [tgId, tzId]);
         console.log("[setTimezone]", tgId, "set", tzId, "rows:", res.rowCount);
@@ -40,7 +48,7 @@ export async function setTimezone(tgId, tzId) {
     }
 }
 /** изменить важность новостей *по дефолту стоит 2 */
-export async function setImportance(tgId, importance) {
+async function setImportance(tgId, importance) {
     if (![1, 2, 3].includes(importance)) {
         throw new Error("importance must be 1, 2, or 3");
     }
@@ -54,7 +62,7 @@ export async function setImportance(tgId, importance) {
     }
 }
 /** обновить username, если он изменился */
-export async function updateUsername(tgId, username = "") {
+async function updateUsername(tgId, username = "") {
     try {
         const res = await pool.query(`UPDATE user_settings
          SET tg_username = $2
@@ -67,6 +75,6 @@ export async function updateUsername(tgId, username = "") {
         throw err;
     }
 }
-export async function setLanguage(tgId, lang) {
+async function setLanguage(tgId, lang) {
     await pool.query("UPDATE user_settings SET lang = $2 WHERE tg_id = $1", [tgId, lang]);
 }

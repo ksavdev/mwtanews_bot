@@ -1,4 +1,7 @@
-export const helpMessage = `
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.helpMessage = void 0;
+exports.helpMessage = `
 Условные обозначения:
 🔴 - Новость с возможным сильным влиянием на рынок.
 🟡 - Новость с возможным средним влиянием на рынок.

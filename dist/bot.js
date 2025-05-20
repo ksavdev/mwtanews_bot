@@ -1,20 +1,22 @@
-import "dotenv/config";
-import { Bot } from "grammy";
-import { conversations, createConversation, } from "@grammyjs/conversations";
-import { helpMessage } from "./messages/helpMessage.js";
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+require("dotenv/config");
+const grammy_1 = require("grammy");
+const conversations_1 = require("@grammyjs/conversations");
+const helpMessage_js_1 = require("./messages/helpMessage.js");
 // Команды 
-import { setupBotCommands } from "./commands/commandList.js";
-import { helpCommand } from "./commands/help.js";
-import { createUser, findUser, updateUsername } from "./services/user.service.js";
-import { setNewsTypeCommand } from "./commands/setNewsType.js";
-import { tzRegionMenu } from "./menus/timezoneMenu.js";
-import { setTzCommand } from "./commands/setTzCommand.js";
-import { utcHelpCommand } from "./commands/utcHelp.js";
-import { utcHelpConversation } from "./conversations/utcHelpConv.js";
-import { setLangCommand } from "./commands/setLang.js";
-import { dailyNewsCommand } from "./commands/dailyNews.js";
-import { weeklyNewsCommand } from "./commands/weeklyNews.js";
-const bot = new Bot(process.env.TG_BOT_TOKEN);
+const commandList_js_1 = require("./commands/commandList.js");
+const help_js_1 = require("./commands/help.js");
+const user_service_js_1 = require("./services/user.service.js");
+const setNewsType_js_1 = require("./commands/setNewsType.js");
+const timezoneMenu_js_1 = require("./menus/timezoneMenu.js");
+const setTzCommand_js_1 = require("./commands/setTzCommand.js");
+const utcHelp_js_1 = require("./commands/utcHelp.js");
+const utcHelpConv_js_1 = require("./conversations/utcHelpConv.js");
+const setLang_js_1 = require("./commands/setLang.js");
+const dailyNews_js_1 = require("./commands/dailyNews.js");
+const weeklyNews_js_1 = require("./commands/weeklyNews.js");
+const bot = new grammy_1.Bot(process.env.TG_BOT_TOKEN);
 // bot.use(async (ctx, next) => {
 //     ctx.config = {
 //         botDeveloper: 123456789,
@@ -22,36 +24,36 @@ const bot = new Bot(process.env.TG_BOT_TOKEN);
 //     };
 //     await next();
 // });
-bot.use(conversations());
+bot.use((0, conversations_1.conversations)());
 // Подключаем все разговоры
-bot.use(createConversation(utcHelpConversation));
-bot.use(tzRegionMenu);
+bot.use((0, conversations_1.createConversation)(utcHelpConv_js_1.utcHelpConversation));
+bot.use(timezoneMenu_js_1.tzRegionMenu);
 // Регистрируем команды (или команды-обработчики)
-weeklyNewsCommand(bot);
-dailyNewsCommand(bot);
-setLangCommand(bot);
-utcHelpCommand(bot);
-setTzCommand(bot);
-setNewsTypeCommand(bot);
-helpCommand(bot);
-setupBotCommands(bot);
+(0, weeklyNews_js_1.weeklyNewsCommand)(bot);
+(0, dailyNews_js_1.dailyNewsCommand)(bot);
+(0, setLang_js_1.setLangCommand)(bot);
+(0, utcHelp_js_1.utcHelpCommand)(bot);
+(0, setTzCommand_js_1.setTzCommand)(bot);
+(0, setNewsType_js_1.setNewsTypeCommand)(bot);
+(0, help_js_1.helpCommand)(bot);
+(0, commandList_js_1.setupBotCommands)(bot);
 bot.command("start", async (ctx) => {
     const uid = ctx.from.id;
     const uname = ctx.from.username ?? "";
-    const user = await findUser(uid);
+    const user = await (0, user_service_js_1.findUser)(uid);
     if (user) {
-        await updateUsername(uid, uname);
+        await (0, user_service_js_1.updateUsername)(uid, uname);
         await ctx.reply(`Рады видеть снова, ${ctx.from.first_name}! 👋`);
     }
     else {
-        await createUser(uid, uname);
+        await (0, user_service_js_1.createUser)(uid, uname);
         ctx.reply(`Привет ${ctx.from?.first_name}!
 Добро пожаловать в Trade Soul News!
 
 Бот будет регулярно оповещать Вас о самых важных экономических новостях, недели и дня.
 
 Вы можете сами запросить события, или же бот будет уведомлять вас ежедневно в 09:00 по вашему времени, если укажете свой часовой пояс, по-умолчанию используется UTC-0.
-${helpMessage}
+${helpMessage_js_1.helpMessage}
 `);
     }
 });
