@@ -1,4 +1,3 @@
-// src/commands/dailyNews.ts
 import { Bot } from "grammy";
 import { DateTime } from "luxon";
 import type { OuterCtx } from "../bot.js";
@@ -8,22 +7,18 @@ import {
   type CalendarEvent,
 } from "../services/calendar/scrape.js";
 
-/* ====== настройки логов ====== */
 const LOG_LEVEL = process.env.LOG_LEVEL ?? "info";
 const info  = (...a: unknown[]) => console.log("[INFO]",  ...a);
 const debug = (...a: unknown[]) => LOG_LEVEL === "debug" && console.log("[DEBUG]", ...a);
 
-/* эмодзи по уровню важности */
 const mark = ["🟢", "🟡", "🔴"];
 
-/* ISO-коды поддерживаемых языков */
 const ISO: Record<string, true> = {
   it: true, zh: true, ru: true, es: true, pl: true, tr: true, ja: true,
   pt: true, da: true, fa: true, ko: true, fr: true, no: true, id: true,
   de: true, hu: true, ar: true, sv: true,
 };
 
-/** Привязка кода валюты к флажку */
 function currencyFlag(cur: string): string {
   const map: Record<string, string> = {
     USD: "🇺🇸", EUR: "🇪🇺", CAD: "🇨🇦", GBP: "🇬🇧", JPY: "🇯🇵",
@@ -32,7 +27,6 @@ function currencyFlag(cur: string): string {
   return map[cur] ?? "";
 }
 
-/** Разбивает длинный текст на чанки по 20 строк */
 async function replyInChunks(
   ctx: OuterCtx,
   header: string,
@@ -53,7 +47,6 @@ async function replyInChunks(
   }
 }
 
-/* ───────── SQL helpers ───────── */
 interface PrefRow { tz_id: string; importance: number; lang: string; }
 
 async function getPrefs(tgId: number): Promise<PrefRow | null> {
@@ -64,9 +57,6 @@ async function getPrefs(tgId: number): Promise<PrefRow | null> {
   return rows[0] ?? null;
 }
 
-/**
- * Фильтрует события календаря только на «сегодня» (локально для tz).
- */
 async function getTodayEvents(lang: string, tz: string): Promise<CalendarEvent[]> {
   const all = await scrapeAllEvents();
   const today = DateTime.utc().setZone(tz);
@@ -80,7 +70,6 @@ async function getTodayEvents(lang: string, tz: string): Promise<CalendarEvent[]
   });
 }
 
-/* ───────── команда /daily_news ───────── */
 export function dailyNewsCommand(bot: Bot<OuterCtx>) {
   bot.command("daily_news", async (ctx) => {
     const uid  = ctx.from!.id;
@@ -107,7 +96,7 @@ export function dailyNewsCommand(bot: Bot<OuterCtx>) {
       .setLocale(ISO[pref.lang] ? pref.lang : "en");
 
     const header = `Ключевые события ${today.toFormat("cccc - dd.LL.yyyy")} (${pref.tz_id}):`;
-    const footer = "_____________________________\nby Trade Soul News";
+    const footer = "_____________________________\nby MW:TA";
 
     const lines = events.map(e => {
       const t = DateTime.fromISO(e.timestamp!, { zone: "utc" })
@@ -120,7 +109,6 @@ export function dailyNewsCommand(bot: Bot<OuterCtx>) {
   });
 }
 
-/* ───────── для фонового планировщика ───────── */
 export async function sendDailyNews(bot: Bot<OuterCtx>, userId: number) {
   const pref = await getPrefs(userId);
   if (!pref) return; // пользователь ещё не /start
@@ -145,7 +133,7 @@ export async function sendDailyNews(bot: Bot<OuterCtx>, userId: number) {
     .setLocale(ISO[pref.lang] ? pref.lang : "en");
 
   const header = `Ключевые события ${today.toFormat("cccc - dd.LL.yyyy")} (${pref.tz_id}):`;
-  const footer = "_____________________________\nby Trade Soul News";
+  const footer = "_____________________________\nby MW:TA";
 
   const lines = events.map(e => {
     const t = DateTime.fromISO(e.timestamp!, { zone: "utc" })
@@ -154,7 +142,6 @@ export async function sendDailyNews(bot: Bot<OuterCtx>, userId: number) {
     return `${mark[e.importance - 1]} ${currencyFlag(e.currency)} ${e.currency} — ${e.title} — ${t}`;
   });
 
-  // временно создаём «контекст-клон» c типизированным параметром
   await replyInChunks(
     {
       ...bot,
