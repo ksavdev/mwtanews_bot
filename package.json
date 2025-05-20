@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "type": "commonjs",
   "scripts": {
+    "prepare": "husky",
+    "lint": "eslint \"src/**/*.{ts,js}\" --max-warnings=0",
     "build": "tsc -p tsconfig.json",
     "docker": "npm run build && docker compose up -d --build",
     "migrate:init": "set DATABASE_URL=postgresql://botuser:devPassword42@localhost:15432/botdb && psql %DATABASE_URL% -f sql/001_create_user_settings.sql",
@@ -30,6 +32,16 @@
     "@types/node": "^22.13.5",
     "@types/node-fetch": "^2.6.12",
     "@types/pg": "^8.11.11",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-prettier": "^10.1.5",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.4.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
+    "prettier": "^3.5.3",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.8.3"
   }
