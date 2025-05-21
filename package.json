@@ -3,13 +3,25 @@
   "version": "1.0.0",
   "type": "commonjs",
   "scripts": {
-    "prepare": "husky",
     "lint": "eslint \"src/**/*.{ts,js}\" --max-warnings=0",
+    "format": "prettier --write \"src/**/*.{ts,js,json,md,yml}\"",
     "build": "tsc -p tsconfig.json",
     "docker": "npm run build && docker compose up -d --build",
     "migrate:init": "set DATABASE_URL=postgresql://botuser:devPassword42@localhost:15432/botdb && psql %DATABASE_URL% -f sql/001_create_user_settings.sql",
-    "watch": "tsc --watch",
-    "start": "node dist/index.js"
+    "watch": "ts-node-dev --respawn src/index.ts",
+    "start": "node -r module-alias/register dist/index.js"
+  },
+  "lint-staged": {
+    "*.{ts,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml}": [
+      "prettier --write"
+    ]
+  },
+  "_moduleAliases": {
+    "@": "dist"
   },
   "dependencies": {
     "@grammyjs/conversations": "^2.1.0",
@@ -20,8 +32,11 @@
     "dotenv": "^16.4.5",
     "grammy": "^1.35.0",
     "luxon": "^3.6.1",
+    "module-alias": "^2.2.2",
     "node-cron": "^4.0.5",
     "pg": "^8.11.5",
+    "pino": "^9.7.0",
+    "pino-pretty": "^13.0.0",
     "puppeteer": "^24.9.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
@@ -37,9 +52,9 @@
     "eslint": "^8.57.0",
     "eslint-config-airbnb-base": "^15.0.0",
     "eslint-config-prettier": "^10.1.5",
+    "eslint-import-resolver-typescript": "^4.3.5",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-prettier": "^5.4.0",
-    "husky": "^9.1.7",
     "lint-staged": "^16.0.0",
     "prettier": "^3.5.3",
     "ts-node-dev": "^2.0.0",

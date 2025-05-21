@@ -22,4 +22,11 @@ module.exports = {
   overrides: [
     { files: ['*.ts'], rules: { 'no-undef': 'off' } },
   ],
+  settings: {
+    'import/resolver': {
+      typescript: { project: './tsconfig.json' },
+      typescript: { project: './tsconfig.json' },
+      node: { extensions: ['.js', '.ts'] },
+    },
+  },
 };
