@@ -18,6 +18,8 @@ import { registerSetNewsTypeCommand } from '@/features/user/commands/setNewsType
 import { setupBotCommands } from '@/features/user/commands/commandList';
 import { startDailyNewsScheduler } from '@/features/news/scheduler/dailyNewsScheduler';
 import { utcHelpConversation } from '@/features/user/conversations/utcHelpConv';
+import { createUser, findUser, updateUsername } from '@/features/user/services/user.service';
+import { helpMessage } from '@/shared/messages/helpMessage';
 
 /* ───────────── тип контекста ───────────── */
 interface BotCfg {
@@ -34,7 +36,7 @@ export const bot = new Bot<BotCtx>(config.TG_BOT_TOKEN);
 
 /* плагины */
 bot.use(conversations<BotCtx, Context>()); // outer, inner
-bot.use(createConversation(utcHelpConversation));
+
 bot.use(tzRegionMenu)
 
 // Регистрируем команды (или команды-обработчики)
@@ -52,13 +54,30 @@ startDailyNewsScheduler(bot);
 bot.command("daily_news", (ctx) => sendDailyNews(bot, ctx.from!.id));
 
 /* feature-модули */
-bot.use(createNewsFeature(bot)); // передаём сам Bot, фича сама подключит cron
 bot.use(createUserFeature()); // user-фича без зависимостей
 
 /* базовые команды */
-bot.command('start', (ctx) =>
-  ctx.reply(`Привет, ${ctx.from?.first_name}! Напишите /help, чтобы узнать команды.`),
-);
+bot.command('start', async (ctx) => {
+  const uid = ctx.from!.id;
+  const uname = ctx.from?.username ?? '';
+  const firstName = ctx.from?.first_name ?? 'друг';
+
+  const user = await findUser(uid);
+
+  if (user) {
+    await updateUsername(uid, uname);
+    await ctx.reply(`Рады видеть снова, ${firstName}! 👋`);
+  } else {
+    await createUser(uid, uname);
+    await ctx.reply(
+      `Привет, ${firstName}!\nДобро пожаловать в MW:TA! 🎉\n\n` +
+      `Бот будет регулярно присылать вам важнейшие экономические события дня и недели.\n\n` +
+      `Вы можете вручную вызвать события или указать свой часовой пояс — ` +
+      `тогда новости будут приходить каждый день в 09:00 по вашему времени. ` +
+      `По умолчанию используется UTC.\n\n${helpMessage}`
+    );
+  }
+});
 
 
 /* глобальный error-handler */

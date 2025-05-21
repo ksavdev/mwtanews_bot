@@ -35,7 +35,7 @@ async function scrapeAllEvents() {
     const calUrl = new URL(iframeSrc, rootUrl).href;
     // 5️⃣  Load the iframe content and wait for the table
     await page.goto(calUrl, { waitUntil: 'networkidle2' });
-    await page.waitForSelector('#ecEventsTable');
+    await page.waitForSelector('#ecEventsTable', { timeout: 60000 });
     // 6️⃣  Scrape the table into structured objects
     const calHtml = await page.content();
     await browser.close();

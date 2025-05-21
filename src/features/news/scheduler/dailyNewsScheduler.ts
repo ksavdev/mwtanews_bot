@@ -1,4 +1,5 @@
 // src/features/news/scheduler/dailyNewsScheduler.ts
+import 'dotenv/config';            // должен быть первым
 import { Bot } from 'grammy';
 import cron from 'node-cron';
 import { pool } from '@/core/db';
@@ -11,30 +12,37 @@ interface UserPrefs {
 }
 
 /**
- * Конвертирует метки "UTC+3"/"UTC-2"/"UTC" в валидные IANA
- * Etc/GMT-инверсия используется по стандарту (знак меняется).
+ * Конвертирует метки "UTC+3"/"UTC-2"/"UTC" в валидные IANA.
+ * В стандарте POSIX знак инвертируется: 
+ *  UTC+3 → Etc/GMT-3, UTC-5 → Etc/GMT+5.
  */
 function offsetToIana(label: string): string {
   if (label === 'UTC') return 'Etc/UTC';
   const m = label.match(/^UTC([+-]\d{1,2})$/);
   if (m) {
     const offset = Number(m[1]);
-    // инвертируем знак: UTC+3 → Etc/GMT-3, UTC-5 → Etc/GMT+5
     const inverted = -offset;
     return `Etc/GMT${inverted >= 0 ? `+${inverted}` : inverted}`;
   }
-  // Если label уже был IANA-зоной (например Europe/Moscow), возвращаем напрямую
+  // Если уже IANA-зона
   return label;
 }
 
 /**
- * Запускает cron-таск, который каждый час проверяет
- * — есть ли у кого сейчас 09:00 по их часовому поясу.
+ * Запускает cron-таск по расписанию из ENV (час и минута).
  */
 export function startDailyNewsScheduler(bot: Bot<BotCtx>) {
-  // cron-выражение "0 * * * *" = каждую ЗЕРОВУЮ минуту каждого часа
-  cron.schedule('0 * * * *', async () => {
+  // Расписание запускаем каждую минуту, чтобы точнее ловить нужную минуту
+  cron.schedule('* * * * *', async () => {
     const now = new Date();
+    const TARGET_HOUR   = parseInt(process.env.DAILY_NEWS_HOUR  ?? '9', 10);
+    const TARGET_MINUTE = parseInt(process.env.DAILY_NEWS_MINUTE ?? '0', 10);
+
+    console.log(
+      `[scheduler] tick at ${now.toISOString()}; ` +
+      `target ${TARGET_HOUR}:${TARGET_MINUTE.toString().padStart(2,'0')}`
+    );
+
     let rows: UserPrefs[];
     try {
       const res = await pool.query<UserPrefs>(
@@ -50,23 +58,27 @@ export function startDailyNewsScheduler(bot: Bot<BotCtx>) {
       const zone = offsetToIana(tz_id);
       let userTime: Date;
       try {
-        // Получаем локальное время пользователя
-        const str = now.toLocaleString('en-US', { timeZone: zone });
-        userTime = new Date(str);
+        const localString = now.toLocaleString('en-US', { timeZone: zone });
+        userTime = new Date(localString);
       } catch (e) {
-        console.error(
-          `[scheduler] неверная временная зона ${tz_id} → ${zone}`,
-          e,
-        );
+        console.error(`[scheduler] неверная временная зона "${tz_id}" → "${zone}":`, e);
         continue;
       }
 
-      // Если в этот час у пользователя ровно 09:00 – отсылаем дайли
-      if (userTime.getHours() === 9) {
+      console.log(
+        `[scheduler] user=${tg_id}, tz_id="${tz_id}", ` +
+        `iana="${zone}", userTime=${userTime.toISOString()}`
+      );
+
+      if (
+        userTime.getHours()   === TARGET_HOUR  &&
+        userTime.getMinutes() === TARGET_MINUTE
+      ) {
+        console.log(`[scheduler] отправляем daily news для ${tg_id}`);
         try {
           await sendDailyNews(bot, tg_id);
         } catch (e) {
-          console.error(`[scheduler] не смог отправить daily news ${tg_id}:`, e);
+          console.error(`[scheduler] не смог отправить daily news для ${tg_id}:`, e);
         }
       }
     }
