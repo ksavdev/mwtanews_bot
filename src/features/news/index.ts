@@ -6,10 +6,6 @@ import { registerWeeklyNewsCommand } from './commands/weeklyNews';
 import { startDailyNewsScheduler } from './scheduler/dailyNewsScheduler';
 import { newsTypeMenu } from './menus/newsTypeMenu';
 
-/**
- * Фабрика: создаёт Composer, подключает всё нужное
- * и сразу запускает планировщик.
- */
 export function createNewsFeature(bot: Bot<BotCtx>): Composer<BotCtx> {
   const composer = new Composer<BotCtx>();
 
@@ -17,7 +13,7 @@ export function createNewsFeature(bot: Bot<BotCtx>): Composer<BotCtx> {
   registerWeeklyNewsCommand(composer);
   composer.use(newsTypeMenu);
 
-  startDailyNewsScheduler(bot); // ← cron
+  startDailyNewsScheduler(bot); 
 
   return composer;
 }

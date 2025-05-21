@@ -17,7 +17,6 @@ exports.tzRegionMenu = new menu_1.Menu('tz-menu')
     .submenu('Америка', 'tz-america')
     .row()
     .text('Отмена', (ctx) => ctx.menu.close());
-/* ───── Asia submenu ───── */
 const asia = new menu_1.Menu('tz-asia')
     .text('UTC+5', (c) => saveTz(c, 'UTC+5'))
     .text('UTC+6', (c) => saveTz(c, 'UTC+6'))
@@ -34,7 +33,6 @@ const asia = new menu_1.Menu('tz-asia')
     .row()
     .back('← Назад')
     .text('Отмена', (c) => c.menu.close());
-/* ───── Europe submenu ───── */
 const europe = new menu_1.Menu('tz-europe')
     .text('UTC-2', (c) => saveTz(c, 'UTC-2'))
     .text('UTC-1', (c) => saveTz(c, 'UTC-1'))
@@ -47,7 +45,6 @@ const europe = new menu_1.Menu('tz-europe')
     .row()
     .back('← Назад')
     .text('Отмена', (c) => c.menu.close());
-/* ───── America submenu ───── */
 const america = new menu_1.Menu('tz-america')
     .text('UTC-11', (c) => saveTz(c, 'UTC-11'))
     .text('UTC-10', (c) => saveTz(c, 'UTC-10'))

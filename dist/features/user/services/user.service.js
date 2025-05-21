@@ -8,7 +8,6 @@ exports.setImportance = setImportance;
 exports.setLang = setLang;
 const db_1 = require("@/core/db");
 const logger_1 = require("@/core/logger");
-/* ────────── CRUD ────────── */
 async function findUser(tgId) {
     const { rows } = await db_1.pool.query('SELECT * FROM user_settings WHERE tg_id = $1 LIMIT 1', [tgId]);
     logger_1.log.debug({ tgId, user: rows[0] ?? null }, '[findUser]');
@@ -27,7 +26,6 @@ async function updateUsername(tgId, username = '') {
        AND tg_username IS DISTINCT FROM $2`, [tgId, username]);
     logger_1.log.debug({ tgId, rowCount }, '[updateUsername]');
 }
-/* ────────── настройки пользователя ────────── */
 async function setTimezone(tgId, tzId) {
     const { rowCount } = await db_1.pool.query('UPDATE user_settings SET tz_id = $2 WHERE tg_id = $1', [
         tgId,
@@ -39,7 +37,6 @@ async function setImportance(tgId, importance) {
     const { rowCount } = await db_1.pool.query('UPDATE user_settings SET importance = $2 WHERE tg_id = $1', [tgId, importance]);
     logger_1.log.debug({ tgId, importance, rowCount }, '[setImportance]');
 }
-/** 👈 новый «каноничный» экспорт: /set_lang использует именно его */
 async function setLang(tgId, lang) {
     const { rowCount } = await db_1.pool.query('UPDATE user_settings SET lang = $2 WHERE tg_id = $1', [
         tgId,

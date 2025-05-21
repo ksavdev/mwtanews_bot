@@ -1,26 +1,11 @@
-// src/features/news/commands/dailyNews.ts
 import { Composer, Bot } from 'grammy';
 import { DateTime } from 'luxon';
-
 import { BotCtx } from '@/core/bot';
 import { pool } from '@/core/db';
 import { CalendarEvent, scrapeAllEvents } from '../services/scrape';
+import { info, debug, LOG_LEVEL } from '@/shared/const/logs';
+import { ISO, mark } from '@/shared/const/marks';
 
-/* ====== настройки логов ====== */
-const LOG_LEVEL = process.env.LOG_LEVEL ?? "info";
-const info  = (...a: unknown[]) => console.log("[INFO]",  ...a);
-const debug = (...a: unknown[]) => LOG_LEVEL === "debug" && console.log("[DEBUG]", ...a);
-
-// ──────────────────────── utils ────────────────────────────
-
-const mark = ['🟢', '🟡', '🔴'] as const;
-
-const ISO: Record<string, true> = {
-  it: true, zh: true, ru: true, es: true, pl: true,
-  tr: true, ja: true, pt: true, da: true, fa: true,
-  ko: true, fr: true, no: true, id: true, de: true,
-  hu: true, ar: true, sv: true,
-};
 
 function currencyFlag(cur: string): string {
   const map: Record<string, string> = {
@@ -45,8 +30,6 @@ async function replyInChunks(
   }
 }
 
-// ──────────────────────── DB ────────────────────────────────
-
 interface PrefRow {
   tz_id: string;
   importance: number;
@@ -61,8 +44,6 @@ async function getPrefs(tgId: number): Promise<PrefRow | null> {
   return rows[0] ?? null;
 }
 
-// ──────────────────────── Calendar ──────────────────────────
-
 async function getTodayEvents(lang: string, tz: string): Promise<CalendarEvent[]> {
   const all = await scrapeAllEvents();
   const today = DateTime.utc().setZone(tz);
@@ -71,12 +52,10 @@ async function getTodayEvents(lang: string, tz: string): Promise<CalendarEvent[]
 
   return all.filter((e) => {
     if (!e.timestamp) return false;
-    const ts = DateTime.fromISO(e.timestamp!, { zone: 'utc' });
+    const ts = DateTime.fromISO(e.timestamp, { zone: 'utc' });
     return ts >= startUtc && ts <= endUtc;
   });
 }
-
-// ──────────────────────── /daily_news ───────────────────────
 
 export function registerDailyNewsCommand(composer: Composer<BotCtx>) {
   composer.command('daily_news', async (ctx) => {
@@ -89,15 +68,13 @@ export function registerDailyNewsCommand(composer: Composer<BotCtx>) {
       events = await getTodayEvents(pref.lang, pref.tz_id);
     } catch (err) {
       console.error('[daily_news] ошибка скрапинга календаря:', err);
-      return ctx.reply(
-        '⚠️ Не удалось получить дневной календарь, попробуйте позже.'
-      );
+      return ctx.reply('⚠️ Не удалось получить дневной календарь, попробуйте позже.');
     }
 
     events = events
       .filter((e) => e.importance >= pref.importance && e.timestamp)
       .sort((a, b) => (a.timestamp! < b.timestamp! ? -1 : 1));
-      
+
     info(`/daily_news ${tgId}: scraped=${events.length}, shown=${events.length}`);
     if (LOG_LEVEL === "debug") {
       const dropped = events.filter(e => e.importance < pref.importance || !e.timestamp);
@@ -123,8 +100,6 @@ export function registerDailyNewsCommand(composer: Composer<BotCtx>) {
     await replyInChunks(ctx, lines, header, footer);
   });
 }
-
-// ──────────────────────── CRON push ⏰ ───────────────────────
 
 export async function sendDailyNews(bot: Bot<BotCtx>, userId: number) {
   const pref = await getPrefs(userId);

@@ -1,22 +1,14 @@
 import { InlineKeyboard } from 'grammy';
-import { Conversation }   from '@grammyjs/conversations';
+import { Conversation } from '@grammyjs/conversations';
+import { BotCtx } from '@/core/bot';
+import { setTimezone } from '@/features/user/services/user.service';
 
-import { BotCtx }       from '@/core/bot';
-import { setTimezone }  from '@/features/user/services/user.service';
+type Conv = Conversation<BotCtx, BotCtx>;
 
-/* -----------------------------------------------------------
- * Тип для удобства
- * --------------------------------------------------------- */
-type Conv = Conversation<BotCtx, BotCtx>;   // ← два параметра: Outer и Inner
-
-/* -----------------------------------------------------------
- * Диалог «подсказка часового пояса»
- * --------------------------------------------------------- */
 export async function utcHelpConversation(conv: Conv, ctx: BotCtx) {
-  /* ① спрашиваем локальное время ---------------------------- */
   await ctx.reply(
     'Введите своё **текущее время** (HH:MM), например `14:37`:',
-    { parse_mode: 'Markdown' },
+    { parse_mode: 'Markdown' }
   );
 
   const { message } = await conv
@@ -25,17 +17,14 @@ export async function utcHelpConversation(conv: Conv, ctx: BotCtx) {
       otherwise: (c) => c.reply('⏰ Формат HH:MM, попробуйте ещё раз.'),
     });
 
-  /* ② считаем смещение ------------------------------------- */
-  const [hStr, mStr] = message.text!.split(':');   // text гарантированно есть
+  const [hStr, mStr] = message.text!.split(':');
   const h = Number(hStr);
   const m = Number(mStr);
-
   const nowUtc = new Date();
-  const diff   = h * 60 + m - (nowUtc.getUTCHours() * 60 + nowUtc.getUTCMinutes());
-  const hours  = Math.round((((diff + 720) % 1440) - 720) / 60); // −12 … +14
-  const label  = hours === 0 ? 'UTC' : `UTC${hours > 0 ? '+' : ''}${hours}`;
+  const diff = h * 60 + m - (nowUtc.getUTCHours() * 60 + nowUtc.getUTCMinutes());
+  const hours = Math.round((((diff + 720) % 1440) - 720) / 60);
+  const label = hours === 0 ? 'UTC' : `UTC${hours > 0 ? '+' : ''}${hours}`;
 
-  /* ③ предлагаем сохранить --------------------------------- */
   const kb = new InlineKeyboard()
     .text('✅ Сохранить', 'tz_save')
     .text('↩️ Другой ввод', 'tz_retry');
@@ -57,7 +46,6 @@ export async function utcHelpConversation(conv: Conv, ctx: BotCtx) {
     });
   } else {
     await ans.answerCallbackQuery();
-    // запускаем диалог заново
     return utcHelpConversation(conv, ans as BotCtx);
   }
 }

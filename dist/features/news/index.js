@@ -6,15 +6,11 @@ const dailyNews_1 = require("./commands/dailyNews");
 const weeklyNews_1 = require("./commands/weeklyNews");
 const dailyNewsScheduler_1 = require("./scheduler/dailyNewsScheduler");
 const newsTypeMenu_1 = require("./menus/newsTypeMenu");
-/**
- * Фабрика: создаёт Composer, подключает всё нужное
- * и сразу запускает планировщик.
- */
 function createNewsFeature(bot) {
     const composer = new grammy_1.Composer();
     (0, dailyNews_1.registerDailyNewsCommand)(composer);
     (0, weeklyNews_1.registerWeeklyNewsCommand)(composer);
     composer.use(newsTypeMenu_1.newsTypeMenu);
-    (0, dailyNewsScheduler_1.startDailyNewsScheduler)(bot); // ← cron
+    (0, dailyNewsScheduler_1.startDailyNewsScheduler)(bot);
     return composer;
 }

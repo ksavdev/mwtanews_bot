@@ -2,16 +2,13 @@ import { pool } from '@/core/db';
 import { log } from '@/core/logger';
 import { QueryResult } from 'pg';
 
-/* ────────── тип строки в user_settings ────────── */
 export interface UserRow {
   tg_id: number;
   tg_username: string;
-  tz_id: string; // "UTC" по умолчанию
+  tz_id: string;
   lang: 'ru' | 'en';
-  importance: number; // 1..3
+  importance: number;
 }
-
-/* ────────── CRUD ────────── */
 
 export async function findUser(tgId: number): Promise<UserRow | null> {
   const { rows }: QueryResult<UserRow> = await pool.query(
@@ -44,7 +41,6 @@ export async function updateUsername(tgId: number, username = ''): Promise<void>
   log.debug({ tgId, rowCount }, '[updateUsername]');
 }
 
-/* ────────── настройки пользователя ────────── */
 
 export async function setTimezone(tgId: number, tzId: string): Promise<void> {
   const { rowCount } = await pool.query('UPDATE user_settings SET tz_id = $2 WHERE tg_id = $1', [
@@ -62,7 +58,6 @@ export async function setImportance(tgId: number, importance: 1 | 2 | 3): Promis
   log.debug({ tgId, importance, rowCount }, '[setImportance]');
 }
 
-/** 👈 новый «каноничный» экспорт: /set_lang использует именно его */
 export async function setLang(tgId: number, lang: 'ru' | 'en'): Promise<void> {
   const { rowCount } = await pool.query('UPDATE user_settings SET lang = $2 WHERE tg_id = $1', [
     tgId,
