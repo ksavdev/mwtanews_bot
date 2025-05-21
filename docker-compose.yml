@@ -18,10 +18,12 @@ services:
       - ./sql/001_create_user_settings.sql:/docker-entrypoint-initdb.d/001_create_user_settings.sql:ro
 
   bot:
+  
     build: .
     depends_on:
       postgres:
         condition: service_healthy
+    restart: always
     environment:
       TG_BOT_TOKEN: ${TG_BOT_TOKEN}
       TE_TOKEN: ${TE_TOKEN}
