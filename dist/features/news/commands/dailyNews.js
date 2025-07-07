@@ -44,6 +44,7 @@ function registerDailyNewsCommand(composer) {
         const pref = await getPrefs(tgId);
         if (!pref)
             return ctx.reply('Сначала введите /start 🙂');
+        await ctx.reply('⏳ Собираем данные, пожалуйста, подождите...');
         let events;
         try {
             events = await getTodayEvents(pref.lang, pref.tz_id);

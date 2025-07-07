@@ -5,7 +5,8 @@ import { pool } from '@/core/db';
 import { CalendarEvent, scrapeAllEvents } from '../services/scrape';
 import { info, debug, LOG_LEVEL } from '@/shared/const/logs';
 import { mark } from '@/shared/const/marks';
-const CHUNK_SIZE = 20;
+
+const CHUNK_SIZE = 30;
 
 function currencyFlag(cur: string): string {
     const map: Record<string, string> = {
@@ -36,14 +37,19 @@ async function getPrefs(tgId: number): Promise<PrefRow | null> {
     return rows[0] ?? null;
 }
 
-async function getWeekEvents(): Promise<CalendarEvent[]> {
+async function getWeekEvents(pref: PrefRow): Promise<CalendarEvent[]> {
     const all = await scrapeAllEvents();
-    const now = DateTime.utc();
-    const weekEnd = now.plus({ days: 7 });
+
+    const weekStartLocal = DateTime.utc().setZone(pref.tz_id).startOf('week');
+    const weekEndLocal = DateTime.utc().setZone(pref.tz_id).endOf('week');
+
+    const weekStartUtc = weekStartLocal.toUTC();
+    const weekEndUtc = weekEndLocal.toUTC();
+
     return all.filter((e) => {
         if (!e.timestamp) return false;
-        const ts = DateTime.fromISO(e.timestamp, { zone: 'utc' });
-        return ts >= now && ts <= weekEnd;
+        const ts = DateTime.fromISO(e.timestamp!, { zone: 'utc' });
+        return ts >= weekStartUtc && ts <= weekEndUtc;
     });
 }
 
@@ -70,9 +76,11 @@ export function registerWeeklyNewsCommand(composer: Composer<BotCtx>) {
         const pref = await getPrefs(tgId);
         if (!pref) return ctx.reply('Сначала введите /start 🙂');
 
+        await ctx.reply('⏳ Собираем данные, пожалуйста, подождите...');
+
         let events: CalendarEvent[];
         try {
-            events = await getWeekEvents();
+            events = await getWeekEvents(pref);
         } catch (err) {
             console.error('[weekly_news] ошибка скрапинга календаря:', err);
             return ctx.reply('⚠️ Не удалось получить календарь новостей, попробуйте чуть позже.');
@@ -82,9 +90,6 @@ export function registerWeeklyNewsCommand(composer: Composer<BotCtx>) {
         if (LOG_LEVEL === "debug") {
             const dropped = events.filter(e => e.importance < pref.importance || !e.timestamp);
             debug("Dropped:", dropped.length, JSON.stringify(dropped, null, 2));
-        }
-        if (!events.length) {
-            return ctx.reply('Сегодня важных событий нет 🙂');
         }
 
         events = events
@@ -112,7 +117,7 @@ export function registerWeeklyNewsCommand(composer: Composer<BotCtx>) {
 
         const rangeStart = weekStart.toFormat('dd.LL.yyyy');
         const rangeEnd = weekEnd.toFormat('dd.LL.yyyy');
-        const header = `<b>Ключевые события недели</b> (${rangeStart} — ${rangeEnd}, ${pref.tz_id})`;
+        const header = `<b>Ключевые события недели</b> (${rangeStart} — ${rangeEnd}, ${pref.tz_id})\n`;
         const footer = '_____________________________\nby MW:TA';
 
         const allLines: string[] = [];

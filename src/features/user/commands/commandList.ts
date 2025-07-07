@@ -13,7 +13,7 @@ export const setupBotCommands = (bot: Bot<BotCtx>) => {
       description:
         'Отображение списка всех новостей, который выйдут сегодня (согласно вашему часовому поясу по умолчанию UTC-0).',
     },
-    { command: 'set_lang', description: 'Выбрать язык новостей (Русский | English)' },
+    // { command: 'set_lang', description: 'Выбрать язык новостей (Русский | English)' },
     { command: 'set_utc', description: 'Команда для установки вашего часового пояса.' },
     { command: 'utc_help', description: 'Команда для помощи в определении вашего часового пояса.' },
     {

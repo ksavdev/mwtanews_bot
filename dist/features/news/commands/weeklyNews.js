@@ -6,7 +6,7 @@ const db_1 = require("@/core/db");
 const scrape_1 = require("../services/scrape");
 const logs_1 = require("@/shared/const/logs");
 const marks_1 = require("@/shared/const/marks");
-const CHUNK_SIZE = 20;
+const CHUNK_SIZE = 30;
 function currencyFlag(cur) {
     const map = {
         USD: '🇺🇸',
@@ -25,15 +25,17 @@ async function getPrefs(tgId) {
     const { rows } = await db_1.pool.query('SELECT tz_id, importance, lang FROM user_settings WHERE tg_id = $1', [tgId]);
     return rows[0] ?? null;
 }
-async function getWeekEvents() {
+async function getWeekEvents(pref) {
     const all = await (0, scrape_1.scrapeAllEvents)();
-    const now = luxon_1.DateTime.utc();
-    const weekEnd = now.plus({ days: 7 });
+    const weekStartLocal = luxon_1.DateTime.utc().setZone(pref.tz_id).startOf('week');
+    const weekEndLocal = luxon_1.DateTime.utc().setZone(pref.tz_id).endOf('week');
+    const weekStartUtc = weekStartLocal.toUTC();
+    const weekEndUtc = weekEndLocal.toUTC();
     return all.filter((e) => {
         if (!e.timestamp)
             return false;
         const ts = luxon_1.DateTime.fromISO(e.timestamp, { zone: 'utc' });
-        return ts >= now && ts <= weekEnd;
+        return ts >= weekStartUtc && ts <= weekEndUtc;
     });
 }
 async function replyInChunks(ctx, lines, header, footer, chunkSize = CHUNK_SIZE) {
@@ -52,9 +54,10 @@ function registerWeeklyNewsCommand(composer) {
         const pref = await getPrefs(tgId);
         if (!pref)
             return ctx.reply('Сначала введите /start 🙂');
+        await ctx.reply('⏳ Собираем данные, пожалуйста, подождите...');
         let events;
         try {
-            events = await getWeekEvents();
+            events = await getWeekEvents(pref);
         }
         catch (err) {
             console.error('[weekly_news] ошибка скрапинга календаря:', err);
@@ -64,9 +67,6 @@ function registerWeeklyNewsCommand(composer) {
         if (logs_1.LOG_LEVEL === "debug") {
             const dropped = events.filter(e => e.importance < pref.importance || !e.timestamp);
             (0, logs_1.debug)("Dropped:", dropped.length, JSON.stringify(dropped, null, 2));
-        }
-        if (!events.length) {
-            return ctx.reply('Сегодня важных событий нет 🙂');
         }
         events = events
             .filter((e) => e.importance >= pref.importance && e.timestamp)
@@ -88,7 +88,7 @@ function registerWeeklyNewsCommand(composer) {
         }
         const rangeStart = weekStart.toFormat('dd.LL.yyyy');
         const rangeEnd = weekEnd.toFormat('dd.LL.yyyy');
-        const header = `<b>Ключевые события недели</b> (${rangeStart} — ${rangeEnd}, ${pref.tz_id})`;
+        const header = `<b>Ключевые события недели</b> (${rangeStart} — ${rangeEnd}, ${pref.tz_id})\n`;
         const footer = '_____________________________\nby MW:TA';
         const allLines = [];
         for (const day of days) {

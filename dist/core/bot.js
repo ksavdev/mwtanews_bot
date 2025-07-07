@@ -21,6 +21,7 @@ const helpMessage_1 = require("@/shared/messages/helpMessage");
 exports.bot = new grammy_1.Bot(config_1.config.TG_BOT_TOKEN);
 exports.bot.use((0, conversations_1.conversations)());
 exports.bot.use(tzRegionMenu_1.tzRegionMenu);
+exports.bot.use((0, user_1.createUserFeature)());
 (0, weeklyNews_1.registerWeeklyNewsCommand)(exports.bot);
 (0, dailyNews_1.registerDailyNewsCommand)(exports.bot);
 (0, setLang_1.registerSetLangCommand)(exports.bot);
@@ -31,7 +32,6 @@ exports.bot.use(tzRegionMenu_1.tzRegionMenu);
 (0, commandList_1.setupBotCommands)(exports.bot);
 (0, dailyNewsScheduler_1.startDailyNewsScheduler)(exports.bot);
 exports.bot.command("daily_news", (ctx) => (0, dailyNews_1.sendDailyNews)(exports.bot, ctx.from.id));
-exports.bot.use((0, user_1.createUserFeature)());
 exports.bot.command("start", async (ctx) => {
     const uid = ctx.from.id;
     const uname = ctx.from?.username ?? "";

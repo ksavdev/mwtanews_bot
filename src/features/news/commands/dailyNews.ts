@@ -63,6 +63,8 @@ export function registerDailyNewsCommand(composer: Composer<BotCtx>) {
     const pref = await getPrefs(tgId);
     if (!pref) return ctx.reply('Сначала введите /start 🙂');
 
+    await ctx.reply('⏳ Собираем данные, пожалуйста, подождите...');
+
     let events: CalendarEvent[];
     try {
       events = await getTodayEvents(pref.lang, pref.tz_id);

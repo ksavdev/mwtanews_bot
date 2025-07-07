@@ -41,7 +41,7 @@ export const bot = new Bot<BotCtx>(config.TG_BOT_TOKEN);
 
 bot.use(conversations<BotCtx, Context>());
 bot.use(tzRegionMenu);
-
+bot.use(createUserFeature());
 registerWeeklyNewsCommand(bot);
 registerDailyNewsCommand(bot);
 registerSetLangCommand(bot);
@@ -57,7 +57,6 @@ bot.command("daily_news", (ctx) =>
     sendDailyNews(bot, ctx.from!.id)
 );
 
-bot.use(createUserFeature());
 
 bot.command("start", async (ctx) => {
     const uid = ctx.from!.id;
